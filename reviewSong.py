@@ -76,6 +76,7 @@ def getStatsNotes(test):
     maxNotes=0
     maxVal=0
     minVal=127
+    maxSpreadPerSamp=[]
 
     for x in output:
         samp=x.split(" ")
@@ -89,6 +90,8 @@ def getStatsNotes(test):
             #getting max and min note values at this time step
             minimum=min(samp)
             maximum=max(samp)
+            spread=int(maximum)-int(minimum)#getting spread at this time step
+            maxSpreadPerSamp.append(spread)
             #updating max and min values note values for song if appropriate
             if int(minimum)<minVal:
                 minVal=int(minimum)
@@ -100,7 +103,9 @@ def getStatsNotes(test):
     rangeNotes=maxVal-minVal #spread of notes
     avgNotes = notesPlayed / len(output) #average notes per sample
     adjNotes=notesPlayed /(len(output)-silenceSamp) #average notes per sample adjusted to remove silent samples
-    return rangeNotes, maxVal, minVal,maxNotes,avgNotes,adjNotes
+    avgSpread=sum(maxSpreadPerSamp)/len(maxSpreadPerSamp) #getting average spread over song
+    maxSpread=max(maxSpreadPerSamp)#getting max note spread over song
+    return avgSpread,maxSpread,rangeNotes, maxVal, minVal,maxNotes,avgNotes,adjNotes
 
 
 files=glob.glob(r"*.midi")#point towards directory with midi files (here same folder)
@@ -113,7 +118,7 @@ for f in files:
     outString= encode(arr) #gets a string representation of the midi file
     maxsilences, silences = getSilences(outString) #by passing in the encoded string get longest silence and the total
                                                    #number of samples which are silent
-    noteRange, maxVal, minVal, maxNotes, avgNotes, adjAvg =getStatsNotes(outString) # getting some stats by looping
+    avgSpread,maxSpread,noteRange, maxVal, minVal, maxNotes, avgNotes, adjAvg =getStatsNotes(outString) # getting some stats by looping
                                                                                     # through encoded data
     percentSilence= getPercentSilence(outString,silences) # get % silence from silence / outString length
 
@@ -121,6 +126,8 @@ for f in files:
     print("longest silence is ",maxsilences,"samples long")
     print("silence covers:",round(percentSilence,4),"%")
     print("notes span range:",noteRange)
+    print("average note range:",avgSpread)
+    print("max note range:",maxSpread)
     print("max note value:",maxVal)
     print("min note value:",minVal)
     print("average number of notes per sample:",round(avgNotes,4))
